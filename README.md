@@ -1,6 +1,6 @@
 # LifeOS Agents
 
-An independent agent runtime for LifeOS. It is intentionally separate from `balaadithya123/life-os`; repository integration will happen through authenticated APIs/webhooks after this project has its own Git repository and reviewed contracts.
+An independent agent runtime for LifeOS. Its authenticated Telegram adapter is committed in `balaadithya123/life-os` (`/agents`, `/agentstatus`, `/agent <role> <task>`). The agents remain separated from the main Worker and use a private API key.
 
 ## Current MVP
 
@@ -45,10 +45,9 @@ The source uses `@cf/zai-org/glm-4.7-flash`, Cloudflare's recommended fast model
 
 Do not make remote Ollama a dependency for the MVP. A persistent, dependable Ollama host that is free, requires no payment card, and remains online has not been verified. Temporary notebooks and sleeping demo spaces do not meet the always-on requirement. Use Workers AI for cloud inference; keep Ollama as an optional provider for a user-controlled local/private endpoint. Reconsider a remote Ollama endpoint only if a genuinely persistent no-card host is verified.
 
-## Next integration steps
+## Integration and remaining hardening
 
-1. Configure `AGENT_API_KEY` as a Cloudflare Worker secret.
-2. Add provider adapter interface and bounded retries/timeout/rate limits.
-3. Add durable task/run persistence in a new namespace/database (do not reuse LifeOS production state by default).
-4. Add Telegram and Handoff Hub adapters with allowlists, audit events, idempotency, and approval gates.
-5. Add integration tests before connecting any write-capable tools.
+- The LifeOS Telegram Worker calls this API through `LIFEOS_AGENTS_API_KEY`; the same private value must be configured as `AGENT_API_KEY` here.
+- Deployment of the main Worker is managed by `.github/workflows/deploy-lifeos-worker.yml` after `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` are configured as GitHub Actions secrets.
+- Add bounded retries/rate limits, durable task/run persistence, and audit events before adding any write-capable tools.
+- Any future repository edits, Telegram sends, or deployments must use explicit allowlists, idempotency, and owner approval.
