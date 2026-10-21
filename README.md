@@ -5,7 +5,7 @@ An independent agent runtime for LifeOS. It is intentionally separate from `bala
 ## Current MVP
 
 - Cloudflare Worker: `lifeos-agents`
-- Hosted inference: Cloudflare Workers AI (`@cf/meta/llama-3.1-8b-instruct`)
+- Hosted inference: Cloudflare Workers AI (`@cf/zai-org/glm-4.7-flash`)
 - Roles: Planner, Study, Radar, Build
 - Public health endpoint; authenticated status, agent-list and planning endpoint
 - Planning-only: no shell execution, repository writes, Telegram sends, or deployments
@@ -28,7 +28,7 @@ npm run check
 
 ## Deploy / configure
 
-The Worker is deployed at `https://lifeos-agents.balaadithya74.workers.dev` with the Workers AI binding. Configure an API key in Cloudflare before using authenticated endpoints:
+The Worker is deployed at `https://lifeos-agents.balaadithya74.workers.dev` with the Workers AI binding. Configure a random API key as a Worker secret before using authenticated endpoints:
 
 ```bash
 npx wrangler secret put AGENT_API_KEY
@@ -36,6 +36,10 @@ npx wrangler deploy
 ```
 
 Do not put the API key in source control. The existing LifeOS Worker and its Telegram webhook were not changed.
+
+## Model choice
+
+The source uses `@cf/zai-org/glm-4.7-flash`, Cloudflare's recommended fast model for multilingual tasks and tool-oriented agent workflows. Check the current Workers AI model catalog and pricing before switching models; some frontier models require paid billing. Workers AI's free allocation is currently 10,000 Neurons per day, after which the free plan stops serving requests until reset.
 
 ## Ollama decision
 
