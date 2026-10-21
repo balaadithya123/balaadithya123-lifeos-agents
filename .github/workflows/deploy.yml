@@ -4,6 +4,8 @@ on:
     branches: [main]
     paths:
       - "src/**"
+      - "tests/**"
+      - "package.json"
       - "wrangler.toml"
       - ".github/workflows/deploy.yml"
   workflow_dispatch:
@@ -17,7 +19,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate tests
+      - name: Run Worker tests
         run: npm test
       - name: Check Worker syntax
         run: npm run check
