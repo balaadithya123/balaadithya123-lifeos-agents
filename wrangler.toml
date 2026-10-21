@@ -1,0 +1,12 @@
+name = "lifeos-agents"
+main = "src/index.js"
+compatibility_date = "2026-10-21"
+
+[ai]
+binding = "AI"
+
+[observability]
+enabled = true
+
+# Configure a random secret before using authenticated endpoints:
+# npx wrangler secret put AGENT_API_KEY
