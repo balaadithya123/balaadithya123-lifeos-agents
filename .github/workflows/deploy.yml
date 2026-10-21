@@ -17,9 +17,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm ci
-      - run: npm test
-      - run: npm run check
+      - name: Validate tests
+        run: npm test
+      - name: Check Worker syntax
+        run: npm run check
       - name: Deploy Worker
         run: npx --yes wrangler@4 deploy --config wrangler.toml
         env:
