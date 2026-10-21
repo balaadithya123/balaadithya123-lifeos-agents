@@ -39,7 +39,7 @@ test("authenticated planner call uses AI and never reports side effects", async 
     body: JSON.stringify({ agent: "planner", task: "Create a short plan" })
   }, {
     AGENT_API_KEY: "test-key",
-    AI: { run: async (model) => { selectedModel = model; return { response: JSON.stringify({ summary: "plan", steps: [], risks: [], approval_required: true, next_action: "review" }) }; }
+    AI: { run: async (model) => { selectedModel = model; return { response: JSON.stringify({ summary: "plan", steps: [], risks: [], approval_required: true, next_action: "review" }) }; } }
   });
   assert.equal(response.status, 200);
   const data = await response.json();
