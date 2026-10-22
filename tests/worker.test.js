@@ -10,7 +10,7 @@ test("health endpoint is public and reports service configuration", async () => 
   const body = await response.json();
   assert.equal(body.ok, true);
   assert.equal(body.service, "lifeos-agents");
-  assert.equal(body.version, "0.1.3");
+  assert.equal(body.version, "0.2.0");
   assert.deepEqual(body.agents, ["planner", "study", "radar", "build"]);
 });
 
