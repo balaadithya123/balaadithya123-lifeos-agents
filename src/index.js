@@ -41,22 +41,32 @@ export function stripReasoning(value) {
 export function extractUserFacingOutput(result, max = 3200) {
   if (result == null) return "";
   if (typeof result === "string") return formatParsedOrRaw(result, max);
-
   const safe = stripReasoning(result);
-  if (typeof safe.response === "string" && safe.response.trim()) {
-    return formatParsedOrRaw(safe.response, max);
-  }
-  if (typeof safe.text === "string" && safe.text.trim()) {
-    return formatParsedOrRaw(safe.text, max);
-  }
-  if (typeof safe.summary === "string" && safe.summary.trim()) {
-    return formatPlanObject(safe, max);
-  }
-  // Last resort: only known safe plan fields, never the whole object
+  const findText = (value, depth = 0) => {
+    if (depth > 5 || value == null) return "";
+    if (typeof value === "string") return value.trim();
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const found = findText(item, depth + 1);
+        if (found) return found;
+      }
+      return "";
+    }
+    if (typeof value !== "object") return "";
+    for (const key of ["response", "text", "output", "output_text", "generated_text", "answer", "content", "message", "choices", "result", "data"]) {
+      if (Object.prototype.hasOwnProperty.call(value, key)) {
+        const found = findText(value[key], depth + 1);
+        if (found) return found;
+      }
+    }
+    return "";
+  };
+  const candidate = findText(safe);
+  if (candidate) return formatParsedOrRaw(candidate, max);
+  if (typeof safe.summary === "string" && safe.summary.trim()) return formatPlanObject(safe, max);
   if (safe.steps || safe.next_action) return formatPlanObject(safe, max);
   return "";
 }
-
 function formatParsedOrRaw(text, max) {
   const cleaned = clean(text, 12000);
   // Models sometimes wrap valid JSON in Markdown fences; unwrap before parsing.

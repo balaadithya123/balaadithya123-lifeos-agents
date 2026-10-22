@@ -95,6 +95,26 @@ test("extractUserFacingOutput prefers response and formats JSON plan", () => {
   assert.doesNotMatch(out, /ignore me/);
 });
 
+test("extractUserFacingOutput supports nested response envelopes", () => {
+  const out = extractUserFacingOutput({
+    response: {
+      choices: [{
+        message: {
+          content: '```json\n{"summary":"Prioritize the top three","steps":["Review deadlines","Choose one task"]}\n```'
+        }
+      }]
+    }
+  });
+  assert.match(out, /Prioritize the top three/);
+  assert.match(out, /1\. Review deadlines/);
+  assert.match(out, /2\. Choose one task/);
+});
+
+test("extractUserFacingOutput supports text content blocks", () => {
+  const out = extractUserFacingOutput({ response: [{ type: "text", text: "A useful response." }] });
+  assert.equal(out, "A useful response.");
+});
+
 test("stripReasoning removes nested reasoning keys", () => {
   const cleaned = stripReasoning({ a: 1, reasoning: "x", nested: { thinking: "y", b: 2 } });
   assert.deepEqual(cleaned, { a: 1, nested: { b: 2 } });
