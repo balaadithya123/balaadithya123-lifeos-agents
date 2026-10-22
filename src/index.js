@@ -41,16 +41,13 @@ export function stripReasoning(value) {
 export function extractUserFacingOutput(result, max = 3200) {
   if (result == null) return "";
   if (typeof result === "string") return formatParsedOrRaw(result, max);
-
   const safe = stripReasoning(result);
-  // Workers AI models do not all return the same envelope. Inspect only
-  // known user-facing fields; never serialize the raw provider object.
-  const textFrom = (value, depth = 0) => {
+  const findText = (value, depth = 0) => {
     if (depth > 5 || value == null) return "";
     if (typeof value === "string") return value.trim();
     if (Array.isArray(value)) {
       for (const item of value) {
-        const found = textFrom(item, depth + 1);
+        const found = findText(item, depth + 1);
         if (found) return found;
       }
       return "";
@@ -58,22 +55,18 @@ export function extractUserFacingOutput(result, max = 3200) {
     if (typeof value !== "object") return "";
     for (const key of ["response", "text", "output", "output_text", "generated_text", "answer", "content", "message", "choices", "result", "data"]) {
       if (Object.prototype.hasOwnProperty.call(value, key)) {
-        const found = textFrom(value[key], depth + 1);
+        const found = findText(value[key], depth + 1);
         if (found) return found;
       }
     }
     return "";
   };
-
-  const candidate = textFrom(safe);
+  const candidate = findText(safe);
   if (candidate) return formatParsedOrRaw(candidate, max);
-  if (typeof safe.summary === "string" && safe.summary.trim()) {
-    return formatPlanObject(safe, max);
-  }
+  if (typeof safe.summary === "string" && safe.summary.trim()) return formatPlanObject(safe, max);
   if (safe.steps || safe.next_action) return formatPlanObject(safe, max);
   return "";
 }
-
 function formatParsedOrRaw(text, max) {
   const cleaned = clean(text, 12000);
   // Models sometimes wrap valid JSON in Markdown fences; unwrap before parsing.
