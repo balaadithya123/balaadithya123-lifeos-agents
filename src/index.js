@@ -59,11 +59,16 @@ export function extractUserFacingOutput(result, max = 3200) {
 
 function formatParsedOrRaw(text, max) {
   const cleaned = clean(text, 12000);
+  // Models sometimes wrap valid JSON in Markdown fences; unwrap before parsing.
+  const unwrapped = cleaned
+    .replace(/^\s*```(?:json)?\s*/i, "")
+    .replace(/\s*```\s*$/, "")
+    .trim();
   try {
-    const parsed = JSON.parse(cleaned);
+    const parsed = JSON.parse(unwrapped);
     if (parsed && typeof parsed === "object") return formatPlanObject(stripReasoning(parsed), max);
   } catch { /* plain text */ }
-  return clean(cleaned, max);
+  return clean(unwrapped, max);
 }
 
 function formatPlanObject(plan, max) {
