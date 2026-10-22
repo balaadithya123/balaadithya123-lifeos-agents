@@ -5,6 +5,11 @@ compatibility_date = "2026-10-21"
 [ai]
 binding = "AI"
 
+# Optional: enable session memory by creating a KV namespace and replacing the ID.
+# [[kv_namespaces]]
+# binding = "AGENT_MEMORY"
+# id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+
 [observability]
 enabled = true
 
