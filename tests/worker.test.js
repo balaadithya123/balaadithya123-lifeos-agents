@@ -100,7 +100,7 @@ test("extractUserFacingOutput supports nested response envelopes", () => {
     response: {
       choices: [{
         message: {
-          content: '```json\\n{"summary":"Prioritize the top three","steps":["Review deadlines","Choose one task"]}\\n```'
+          content: '```json\n{"summary":"Prioritize the top three","steps":["Review deadlines","Choose one task"]}\n```'
         }
       }]
     }
