@@ -1,53 +1,97 @@
 # LifeOS Agents
 
-An independent agent runtime for LifeOS. Its authenticated Telegram adapter is committed in `balaadithya123/life-os` (`/agents`, `/agentstatus`, `/agent <role> <task>`). The agents remain separated from the main Worker and use a private API key.
+Independent Cloudflare Worker for LifeOS's specialist AI agents. This repository is separate from the main LifeOS application.
 
-## Current MVP
+## Current capabilities
 
-- Cloudflare Worker: `lifeos-agents`
-- Hosted inference: Cloudflare Workers AI (`@cf/zai-org/glm-4.7-flash`)
-- Roles: Planner, Study, Radar, Build
-- Public health endpoint; authenticated status, agent-list and planning endpoint
-- Planning-only: no shell execution, repository writes, Telegram sends, or deployments
-- Owner approval required for any future side-effecting tool
-- Basic offline tests and GitHub Actions validation workflow
+- Cloudflare Workers AI inference using `@cf/zai-org/glm-4.7-flash`
+- Four specialist agents: Planner, Study (JEE), Radar (research/evaluation of supplied evidence), and Build (software implementation planning)
+- Authenticated `POST /api/run` for one specialist
+- Authenticated `POST /api/orchestrate` for up to four selected specialists with bounded text handoffs
+- Optional session memory through a Cloudflare KV binding named `AGENT_MEMORY`; only used when a caller supplies `session_id` and explicitly sets `remember: true`
+- Output extraction that strips reasoning fields, input validation, bounded context/output sizes, health/status endpoints, offline tests, and GitHub Actions validation
+- Planning-only security boundary: no shell execution, repository writes, Telegram sends, live browsing, or deployments
 
 ## Endpoints
 
-- `GET /health` — public health and configuration flags
+- `GET /health` — public health/configuration flags
 - `GET /api/status` — bearer-authenticated runtime status
 - `GET /api/agents` — bearer-authenticated agent catalogue
-- `POST /api/run` — bearer-authenticated planning request; JSON body: `{ "agent": "planner", "task": "...", "context": "optional" }`
+- `POST /api/run` — run one specialist
+- `POST /api/orchestrate` — run one or more specialists in sequence
 
-## Local checks
+Every private endpoint requires `Authorization: Bearer <AGENT_API_KEY>`.
 
-```bash
-npm test
-npm run check
+### Run one agent
+
+```json
+{
+  "agent": "study",
+  "task": "Create a revision plan for my next mock test",
+  "context": "Optional syllabus, available hours, mistakes, or constraints",
+  "session_id": "optional-session-id",
+  "remember": false
+}
 ```
 
-## Deploy / configure
+### Orchestrate multiple agents
 
-The Worker is deployed at `https://lifeos-agents.balaadithya74.workers.dev` with the Workers AI binding. Configure a random API key as a Worker secret before using authenticated endpoints:
+```json
+{
+  "task": "Plan and review a small software release",
+  "agents": ["planner", "build", "radar"],
+  "context": "Supply requirements and any evidence to evaluate",
+  "session_id": "optional-session-id",
+  "remember": false
+}
+```
+
+Orchestration is sequential and bounded to four unique known agents. It passes only task/context and previous specialist outputs; it does not grant agents tools or execution permissions. Unknown IDs are ignored when at least one valid agent remains.
+
+## Configure and deploy
+
+The Worker name is `lifeos-agents`. Set a strong private API key as a Cloudflare Worker secret:
 
 ```bash
 npx wrangler secret put AGENT_API_KEY
 npx wrangler deploy
 ```
 
-Do not put the API key in source control. The existing LifeOS Worker and its Telegram webhook were not changed.
+The LifeOS Telegram adapter must use the same private value in its `LIFEOS_AGENTS_API_KEY` secret. Never commit either secret.
 
-## Model choice
+### Optional persistent session memory
 
-The source uses `@cf/zai-org/glm-4.7-flash`, Cloudflare's recommended fast model for multilingual tasks and tool-oriented agent workflows. Check the current Workers AI model catalog and pricing before switching models; some frontier models require paid billing. Workers AI's free allocation is currently 10,000 Neurons per day, after which the free plan stops serving requests until reset.
+Create a KV namespace, then add its namespace ID to `wrangler.toml`:
 
-## Ollama decision
+```toml
+[[kv_namespaces]]
+binding = "AGENT_MEMORY"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+```
 
-Do not make remote Ollama a dependency for the MVP. A persistent, dependable Ollama host that is free, requires no payment card, and remains online has not been verified. Temporary notebooks and sleeping demo spaces do not meet the always-on requirement. Use Workers AI for cloud inference; keep Ollama as an optional provider for a user-controlled local/private endpoint. Reconsider a remote Ollama endpoint only if a genuinely persistent no-card host is verified.
+Without this binding, agent execution and orchestration still work; memory flags report unavailable and no memory is persisted. Session identifiers are sanitized and stored for 30 days. Use opaque session IDs rather than names, phone numbers, or other personal identifiers. Stored notes are short and bounded; do not send passwords, API keys, or sensitive personal information.
 
-## Integration and remaining hardening
+After configuring KV, redeploy the Worker. KV setup is optional and is not automatically provisioned by this repository.
 
-- The LifeOS Telegram Worker calls this API through `LIFEOS_AGENTS_API_KEY`; the same private value must be configured as `AGENT_API_KEY` here.
-- Deployment of the main Worker is managed by `.github/workflows/deploy-lifeos-worker.yml` after `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` are configured as GitHub Actions secrets.
-- Add bounded retries/rate limits, durable task/run persistence, and audit events before adding any write-capable tools.
-- Any future repository edits, Telegram sends, or deployments must use explicit allowlists, idempotency, and owner approval.
+## Local checks
+
+Requires Node.js 22 or a recent Node.js release with built-in test runner:
+
+```bash
+npm test
+npm run check
+```
+
+GitHub Actions runs both checks on pull requests and pushes to main/feature branches.
+
+## Safety and limitations
+
+- Agents return recommendations, not completed actions.
+- `executed_actions` and `tool_calls` remain empty; no tool execution is implemented.
+- Every response signals that approval is required before external actions.
+- Radar has no live web access. It evaluates evidence included in the request only.
+- Orchestration is not autonomous delegation to external services; it is bounded model-to-model text handoff.
+- Add authenticated, allowlisted tool adapters, rate limiting, durable audit events, and idempotency checks before considering any write-capable tools.
+- Workers AI quota and model availability depend on Cloudflare account limits and current product policy.
+
+The main LifeOS Worker and Telegram webhook are not modified by this repository's code changes.
