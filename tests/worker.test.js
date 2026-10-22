@@ -119,11 +119,11 @@ test("inference timeout is reported with layer and duration", async () => {
 
 test("extractUserFacingOutput parses fenced JSON into concise text", () => {
   const out = extractUserFacingOutput({
-    response: '```json\\n{"summary":"Prioritize today","steps":[{"action":"Capture","description":"List tasks"},{"action":"Select","description":"Pick top three"}],"reasoning":"must not leak"}\\n```',
+    response: '```json\n{"summary":"Prioritize today","steps":[{"action":"Capture","description":"List tasks"},{"action":"Select","description":"Pick top three"}],"reasoning":"must not leak"}\n```',
     reasoning: "outer reasoning must not leak"
   });
   assert.match(out, /Prioritize today/);
-  assert.match(out, /1\\. Capture/);
-  assert.match(out, /2\\. Select/);
+  assert.match(out, /1\. Capture/);
+  assert.match(out, /2\. Select/);
   assert.doesNotMatch(out, /```|reasoning|must not leak/i);
 });
