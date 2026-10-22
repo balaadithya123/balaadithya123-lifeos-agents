@@ -106,8 +106,8 @@ test("extractUserFacingOutput supports nested response envelopes", () => {
     }
   });
   assert.match(out, /Prioritize the top three/);
-  assert.match(out, /1\\. Review deadlines/);
-  assert.match(out, /2\\. Choose one task/);
+  assert.match(out, /1\. Review deadlines/);
+  assert.match(out, /2\. Choose one task/);
 });
 
 test("extractUserFacingOutput supports text content blocks", () => {
